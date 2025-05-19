@@ -107,6 +107,22 @@ const MarketMap: React.FC = () => {
     setSelectedId(null);
   };
 
+  const cloneSelectedStore = () => {
+    if (selectedId === null) return;
+    const selectedStore = stores.find((store) => store.id === selectedId);
+    if (!selectedStore) return;
+
+    const maxId = stores.reduce((max, store) => Math.max(max, store.id), 0);
+    const newStore: Store = {
+      ...selectedStore,
+      id: maxId + 1,
+      x: selectedStore.x + 20, // Offset by 20 pixels
+      y: selectedStore.y + 20
+    };
+    setStores([...stores, newStore]);
+    setSelectedId(newStore.id);
+  };
+
   const updateShapeType = (newShape: ShapeType) => {
     if (selectedId === null) return;
 
@@ -240,6 +256,14 @@ const MarketMap: React.FC = () => {
             <div className='space-y-2 pt-4'>
               <Button variant='default' className='w-full' onClick={addStore}>
                 ➕ Thêm gian hàng
+              </Button>
+              <Button
+                variant='secondary'
+                className='w-full'
+                onClick={cloneSelectedStore}
+                disabled={selectedId === null}
+              >
+                📋 Nhân bản
               </Button>
               <Button
                 variant='destructive'
