@@ -19,17 +19,26 @@ import {
 import { Input } from './components/ui/input';
 import { Store, ShapeType } from './types/store';
 import { TextLabel } from './types/text';
+import { Canvas } from './types/canvas';
 import { renderShape } from './utils/shapeRenderer';
 import { renderText } from './utils/textRenderer';
 
+const CANVASES: Canvas[] = [
+  { id: 1, name: 'Chợ chính' },
+  { id: 2, name: 'Chợ phụ' }
+];
+
 const MarketMap: React.FC = () => {
+  const [selectedCanvasId, setSelectedCanvasId] = useState<number>(1);
   const [stores, setStores] = useState<Store[]>(() => {
-    const saved = localStorage.getItem('market-layout');
+    const saved = localStorage.getItem(`market-layout-${selectedCanvasId}`);
     return saved ? JSON.parse(saved) : [];
   });
 
   const [textLabels, setTextLabels] = useState<TextLabel[]>(() => {
-    const saved = localStorage.getItem('market-text-labels');
+    const saved = localStorage.getItem(
+      `market-text-labels-${selectedCanvasId}`
+    );
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -45,6 +54,20 @@ const MarketMap: React.FC = () => {
   const shapeRefs = useRef<Map<number, any>>(new Map());
   const textRefs = useRef<Map<number, any>>(new Map());
   const stageRef = useRef<any>(null);
+
+  useEffect(() => {
+    const savedStores = localStorage.getItem(
+      `market-layout-${selectedCanvasId}`
+    );
+    const savedTextLabels = localStorage.getItem(
+      `market-text-labels-${selectedCanvasId}`
+    );
+
+    setStores(savedStores ? JSON.parse(savedStores) : []);
+    setTextLabels(savedTextLabels ? JSON.parse(savedTextLabels) : []);
+    setSelectedId(null);
+    setSelectedTextId(null);
+  }, [selectedCanvasId]);
 
   useEffect(() => {
     if (
@@ -98,13 +121,22 @@ const MarketMap: React.FC = () => {
   };
 
   const saveLayout = () => {
-    localStorage.setItem('market-layout', JSON.stringify(stores));
-    localStorage.setItem('market-text-labels', JSON.stringify(textLabels));
+    localStorage.setItem(
+      `market-layout-${selectedCanvasId}`,
+      JSON.stringify(stores)
+    );
+    localStorage.setItem(
+      `market-text-labels-${selectedCanvasId}`,
+      JSON.stringify(textLabels)
+    );
     alert('Layout saved!');
   };
 
   const saveStoreChanges = () => {
-    localStorage.setItem('market-layout', JSON.stringify(stores));
+    localStorage.setItem(
+      `market-layout-${selectedCanvasId}`,
+      JSON.stringify(stores)
+    );
     setIsDialogOpen(false);
   };
 
@@ -365,7 +397,24 @@ const MarketMap: React.FC = () => {
 
   return (
     <div className='p-4'>
-      <h1 className='text-2xl font-bold text-red-500'>Bản đồ chợ Di Linh</h1>
+      <div className='flex flex-col gap-4 mb-4'>
+        <h1 className='text-2xl font-bold text-red-500'>Bản đồ chợ Di Linh</h1>
+        <Select
+          value={selectedCanvasId.toString()}
+          onValueChange={(value) => setSelectedCanvasId(parseInt(value))}
+        >
+          <SelectTrigger className='w-[200px]'>
+            <SelectValue placeholder='Chọn khu vực' />
+          </SelectTrigger>
+          <SelectContent>
+            {CANVASES.map((canvas) => (
+              <SelectItem key={canvas.id} value={canvas.id.toString()}>
+                {canvas.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className='flex flex-row gap-4 mt-4'>
         <Card className='w-80'>
           <CardHeader>
