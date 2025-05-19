@@ -216,8 +216,12 @@ const MarketMap: React.FC = () => {
   const selectedStore = stores.find((s) => s.id === selectedId);
 
   return (
-    <div style={{ display: 'flex' }}>
-      <Stage width={800} height={500} style={{ border: '1px solid gray' }}>
+    <div className='flex p-4 gap-4'>
+      <Stage
+        width={800}
+        height={500}
+        className='border border-gray-300 rounded-lg shadow-md'
+      >
         <Layer>
           {stores.map((store) => (
             <React.Fragment key={store.id}>
@@ -237,40 +241,51 @@ const MarketMap: React.FC = () => {
         </Layer>
       </Stage>
 
-      <div style={{ marginLeft: 20 }}>
-        <h3>🛍️ Store Info</h3>
+      <div className='w-64 p-4 bg-white rounded-lg shadow-md'>
+        <h3 className='text-xl font-semibold mb-4'>🛍️ Store Info</h3>
         {selectedStore ? (
-          <div>
+          <div className='space-y-3'>
             <p>
-              <strong>Name:</strong> {selectedStore.name}
+              <span className='font-medium'>Name:</span> {selectedStore.name}
             </p>
             <p>
-              <strong>ID:</strong> {selectedStore.id}
+              <span className='font-medium'>ID:</span> {selectedStore.id}
             </p>
-            <p>
-              <strong>Shape:</strong>
-            </p>
-            <select
-              value={selectedStore.shapeType}
-              onChange={(e) => updateShapeType(e.target.value as ShapeType)}
+            <div>
+              <p className='font-medium mb-2'>Shape:</p>
+              <select
+                value={selectedStore.shapeType}
+                onChange={(e) => updateShapeType(e.target.value as ShapeType)}
+                className='w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+              >
+                <option value='rect'>Rectangle</option>
+                <option value='rounded'>Rounded</option>
+                <option value='circle'>Circle</option>
+                <option value='ellipse'>Ellipse</option>
+              </select>
+            </div>
+            <button
+              onClick={deleteSelectedStore}
+              className='w-full mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors'
             >
-              <option value='rect'>Rectangle</option>
-              <option value='rounded'>Rounded</option>
-              <option value='circle'>Circle</option>
-              <option value='ellipse'>Ellipse</option>
-            </select>
-            <br />
-            <button onClick={deleteSelectedStore} style={{ marginTop: 5 }}>
               🗑️ Delete
             </button>
           </div>
         ) : (
-          <p>Click a store to select</p>
+          <p className='text-gray-500 italic'>Click a store to select</p>
         )}
 
-        <div style={{ marginTop: 20 }}>
-          <button onClick={addStore}>➕ Add Store</button>
-          <button onClick={saveLayout} style={{ marginLeft: 10 }}>
+        <div className='mt-6 space-y-3'>
+          <button
+            onClick={addStore}
+            className='w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors'
+          >
+            ➕ Add Store
+          </button>
+          <button
+            onClick={saveLayout}
+            className='w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors'
+          >
             💾 Save Layout
           </button>
         </div>
