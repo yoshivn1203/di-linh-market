@@ -298,8 +298,8 @@ const MarketMap: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        <div className='w-[1024px] h-[768px] border border-border rounded-lg shadow-md'>
-          <Stage width={1024} height={768} className=''>
+        <div className='w-[1280px] h-[720px] border border-border rounded-lg shadow-md'>
+          <Stage width={1280} height={720} className=''>
             <Layer>
               {stores.map((store) => (
                 <React.Fragment key={store.id}>
