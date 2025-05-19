@@ -18,7 +18,9 @@ import {
 } from './components/ui/dialog';
 import { Input } from './components/ui/input';
 import { Store, ShapeType } from './types/store';
+import { TextLabel } from './types/text';
 import { renderShape } from './utils/shapeRenderer';
+import { renderText } from './utils/textRenderer';
 
 const MarketMap: React.FC = () => {
   const [stores, setStores] = useState<Store[]>(() => {
@@ -26,13 +28,22 @@ const MarketMap: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [textLabels, setTextLabels] = useState<TextLabel[]>(() => {
+    const saved = localStorage.getItem('market-text-labels');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedTextId, setSelectedTextId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTextDialogOpen, setIsTextDialogOpen] = useState(false);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const trRef = useRef<any>(null);
+  const textTrRef = useRef<any>(null);
   const shapeRefs = useRef<Map<number, any>>(new Map());
+  const textRefs = useRef<Map<number, any>>(new Map());
   const stageRef = useRef<any>(null);
 
   useEffect(() => {
@@ -56,7 +67,9 @@ const MarketMap: React.FC = () => {
             ...store,
             width: node.width() * node.scaleX(),
             height: node.height() * node.scaleY(),
-            rotation: node.rotation()
+            rotation: node.rotation(),
+            x: node.x(),
+            y: node.y()
           }
         : store
     );
@@ -70,14 +83,23 @@ const MarketMap: React.FC = () => {
   };
 
   const handleDragEnd = (e: any, id: number) => {
+    const node = e.target;
     const updatedStores = stores.map((store) =>
-      store.id === id ? { ...store, x: e.target.x(), y: e.target.y() } : store
+      store.id === id
+        ? {
+            ...store,
+            x: node.x(),
+            y: node.y(),
+            rotation: node.rotation()
+          }
+        : store
     );
     setStores(updatedStores);
   };
 
   const saveLayout = () => {
     localStorage.setItem('market-layout', JSON.stringify(stores));
+    localStorage.setItem('market-text-labels', JSON.stringify(textLabels));
     alert('Layout saved!');
   };
 
@@ -262,6 +284,85 @@ const MarketMap: React.FC = () => {
 
   const selectedStore = stores.find((s) => s.id === selectedId);
 
+  const addText = () => {
+    const maxId = Math.max(
+      ...textLabels.map((label) => label.id),
+      ...stores.map((store) => store.id),
+      0
+    );
+    const newText: TextLabel = {
+      id: maxId + 1,
+      text: 'New Text',
+      x: 100,
+      y: 100,
+      fontSize: 20,
+      fontFamily: 'Arial',
+      fill: '#000000'
+    };
+    setTextLabels([...textLabels, newText]);
+    setSelectedTextId(newText.id);
+  };
+
+  const updateText = (id: number, newText: string) => {
+    const updated = textLabels.map((label) =>
+      label.id === id ? { ...label, text: newText } : label
+    );
+    setTextLabels(updated);
+  };
+
+  const deleteSelectedText = () => {
+    if (selectedTextId === null) return;
+    const updated = textLabels.filter((label) => label.id !== selectedTextId);
+    setTextLabels(updated);
+    setSelectedTextId(null);
+  };
+
+  const handleTextDragEnd = (e: any, id: number) => {
+    const node = e.target;
+    const updated = textLabels.map((label) =>
+      label.id === id
+        ? {
+            ...label,
+            x: node.x(),
+            y: node.y(),
+            rotation: node.rotation()
+          }
+        : label
+    );
+    setTextLabels(updated);
+  };
+
+  useEffect(() => {
+    if (
+      selectedTextId !== null &&
+      textTrRef.current &&
+      textRefs.current.has(selectedTextId)
+    ) {
+      textTrRef.current.nodes([textRefs.current.get(selectedTextId)]);
+      textTrRef.current.getLayer().batchDraw();
+    } else {
+      textTrRef.current?.nodes([]);
+    }
+  }, [selectedTextId]);
+
+  const selectedText = textLabels.find((t) => t.id === selectedTextId);
+
+  const handleTextTransformEnd = (id: number) => {
+    const node = textRefs.current.get(id);
+    const updated = textLabels.map((label) =>
+      label.id === id
+        ? {
+            ...label,
+            fontSize: node.fontSize(),
+            rotation: node.rotation(),
+            x: node.x(),
+            y: node.y()
+          }
+        : label
+    );
+    setTextLabels(updated);
+  };
+
   return (
     <div className='p-4'>
       <h1 className='text-2xl font-bold text-red-500'>Bản đồ chợ Di Linh</h1>
@@ -349,6 +450,9 @@ const MarketMap: React.FC = () => {
               <Button variant='default' className='w-full' onClick={addStore}>
                 ➕ Thêm gian hàng
               </Button>
+              <Button variant='default' className='w-full' onClick={addText}>
+                📝 Thêm chữ
+              </Button>
               <Button
                 variant='secondary'
                 className='w-full'
@@ -360,7 +464,11 @@ const MarketMap: React.FC = () => {
               <Button
                 variant='destructive'
                 className='w-full'
-                onClick={deleteSelectedStore}
+                onClick={
+                  selectedTextId !== null
+                    ? deleteSelectedText
+                    : deleteSelectedStore
+                }
               >
                 🗑️ Xóa
               </Button>
@@ -396,7 +504,10 @@ const MarketMap: React.FC = () => {
                 <React.Fragment key={store.id}>
                   {renderShape(store, {
                     draggable: true,
-                    onClick: () => setSelectedId(store.id),
+                    onClick: () => {
+                      setSelectedId(store.id);
+                      setSelectedTextId(null);
+                    },
                     onDblClick: () => {
                       setSelectedId(store.id);
                       setIsDialogOpen(true);
@@ -410,7 +521,26 @@ const MarketMap: React.FC = () => {
                   })}
                 </React.Fragment>
               ))}
+              {textLabels.map((label) =>
+                renderText(label, {
+                  draggable: true,
+                  onClick: () => {
+                    setSelectedTextId(label.id);
+                    setSelectedId(null);
+                  },
+                  onDblClick: () => {
+                    setSelectedTextId(label.id);
+                    setIsTextDialogOpen(true);
+                  },
+                  onDragEnd: (e) => handleTextDragEnd(e, label.id),
+                  onTransformEnd: () => handleTextTransformEnd(label.id),
+                  ref: (node) => {
+                    if (node) textRefs.current.set(label.id, node);
+                  }
+                })
+              )}
               <Transformer ref={trRef} />
+              <Transformer ref={textTrRef} />
             </Layer>
           </Stage>
         </div>
@@ -447,6 +577,77 @@ const MarketMap: React.FC = () => {
             <DialogFooter className='gap-2'>
               <Button variant='default' onClick={saveStoreChanges}>
                 Lưu thay đổi
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isTextDialogOpen} onOpenChange={setIsTextDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Chỉnh sửa chữ</DialogTitle>
+            </DialogHeader>
+            {selectedText && (
+              <div className='space-y-4'>
+                <div>
+                  <p className='text-sm font-medium mb-2'>Nội dung</p>
+                  <Input
+                    value={selectedText.text}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      updateText(selectedText.id, e.target.value)
+                    }
+                    placeholder='Nhập nội dung'
+                  />
+                </div>
+                <div>
+                  <p className='text-sm font-medium mb-2'>Kích thước chữ</p>
+                  <Input
+                    type='number'
+                    value={selectedText.fontSize}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const updated = textLabels.map((label) =>
+                        label.id === selectedText.id
+                          ? {
+                              ...label,
+                              fontSize: parseInt(e.target.value) || 20
+                            }
+                          : label
+                      );
+                      setTextLabels(updated);
+                    }}
+                    min='8'
+                    max='72'
+                  />
+                </div>
+                <div>
+                  <p className='text-sm font-medium mb-2'>Màu chữ</p>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='color'
+                      value={selectedText.fill}
+                      onChange={(e) => {
+                        const updated = textLabels.map((label) =>
+                          label.id === selectedText.id
+                            ? { ...label, fill: e.target.value }
+                            : label
+                        );
+                        setTextLabels(updated);
+                      }}
+                      className='w-10 h-10 rounded cursor-pointer'
+                    />
+                    <span className='text-sm text-muted-foreground'>
+                      {selectedText.fill}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter className='gap-2'>
+              <Button
+                variant='default'
+                onClick={() => setIsTextDialogOpen(false)}
+              >
+                Đóng
               </Button>
             </DialogFooter>
           </DialogContent>
