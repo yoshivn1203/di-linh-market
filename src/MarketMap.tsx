@@ -28,8 +28,12 @@ const MarketMap: React.FC = () => {
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const trRef = useRef<any>(null);
   const shapeRefs = useRef<Map<number, any>>(new Map());
+  const stageRef = useRef<any>(null);
 
   useEffect(() => {
     if (
@@ -168,6 +172,94 @@ const MarketMap: React.FC = () => {
     setStores(updated);
   };
 
+  const handleWheel = (e: any) => {
+    e.evt.preventDefault();
+
+    const stage = stageRef.current;
+    const oldScale = stage.scaleX();
+
+    // Calculate new scale
+    const newScale = e.evt.deltaY < 0 ? oldScale * 1.1 : oldScale / 1.1;
+
+    // Prevent zooming out beyond original size
+    if (newScale < 1) return;
+
+    setScale(newScale);
+
+    // Center the zoom
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2
+    };
+
+    const newPos = {
+      x: center.x - (center.x - position.x) * (newScale / oldScale),
+      y: center.y - (center.y - position.y) * (newScale / oldScale)
+    };
+
+    // Calculate boundaries
+    const stageWidth = stage.width();
+    const stageHeight = stage.height();
+    const scaledWidth = stageWidth * newScale;
+    const scaledHeight = stageHeight * newScale;
+
+    // Calculate maximum allowed position
+    const maxX = 0;
+    const maxY = 0;
+    const minX = stageWidth - scaledWidth;
+    const minY = stageHeight - scaledHeight;
+
+    // Constrain the position within boundaries
+    newPos.x = Math.min(maxX, Math.max(minX, newPos.x));
+    newPos.y = Math.min(maxY, Math.max(minY, newPos.y));
+
+    setPosition(newPos);
+    stage.scale({ x: newScale, y: newScale });
+    stage.position(newPos);
+    stage.batchDraw();
+  };
+
+  const handleMouseDown = (e: any) => {
+    // Only enable dragging if we're not clicking on a store
+    if (e.target === e.target.getStage()) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleMouseMove = (e: any) => {
+    if (!isDragging) return;
+
+    const stage = stageRef.current;
+    const newPos = {
+      x: stage.x() + e.evt.movementX,
+      y: stage.y() + e.evt.movementY
+    };
+
+    // Calculate boundaries
+    const stageWidth = stage.width();
+    const stageHeight = stage.height();
+    const scaledWidth = stageWidth * scale;
+    const scaledHeight = stageHeight * scale;
+
+    // Calculate maximum allowed position
+    const maxX = 0;
+    const maxY = 0;
+    const minX = stageWidth - scaledWidth;
+    const minY = stageHeight - scaledHeight;
+
+    // Constrain the position within boundaries
+    newPos.x = Math.min(maxX, Math.max(minX, newPos.x));
+    newPos.y = Math.min(maxY, Math.max(minY, newPos.y));
+
+    setPosition(newPos);
+    stage.position(newPos);
+    stage.batchDraw();
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   const selectedStore = stores.find((s) => s.id === selectedId);
 
   return (
@@ -283,7 +375,22 @@ const MarketMap: React.FC = () => {
           </CardContent>
         </Card>
         <div className='w-[1280px] h-[720px] border border-border rounded-lg shadow-md'>
-          <Stage width={1280} height={720} className='bg-gray-100'>
+          <Stage
+            width={1280}
+            height={720}
+            className='bg-gray-100'
+            ref={stageRef}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            scaleX={scale}
+            scaleY={scale}
+            x={position.x}
+            y={position.y}
+            draggable={false}
+          >
             <Layer>
               {stores.map((store) => (
                 <React.Fragment key={store.id}>
