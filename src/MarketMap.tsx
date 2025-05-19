@@ -30,6 +30,7 @@ interface Store {
   color: string;
   shapeType: ShapeType;
   rotation: number;
+  storeOwner: string;
 }
 
 const MarketMap: React.FC = () => {
@@ -98,14 +99,15 @@ const MarketMap: React.FC = () => {
     const maxId = stores.reduce((max, store) => Math.max(max, store.id), 0);
     const newStore: Store = {
       id: maxId + 1,
-      name: `Store ${String.fromCharCode(65 + stores.length)}`,
+      name: `Kiot ${String.fromCharCode(65 + stores.length)}`,
       x: 100,
       y: 100,
       width: 100,
       height: 80,
       color: 'lightgray',
       shapeType: 'rect',
-      rotation: 0
+      rotation: 0,
+      storeOwner: ''
     };
     setStores([...stores, newStore]);
     setSelectedId(newStore.id);
@@ -138,6 +140,14 @@ const MarketMap: React.FC = () => {
     if (selectedId === null) return;
     const updated = stores.map((store) =>
       store.id === selectedId ? { ...store, name: newName } : store
+    );
+    setStores(updated);
+  };
+
+  const updateStoreOwner = (newOwner: string) => {
+    if (selectedId === null) return;
+    const updated = stores.map((store) =>
+      store.id === selectedId ? { ...store, storeOwner: newOwner } : store
     );
     setStores(updated);
   };
@@ -227,26 +237,26 @@ const MarketMap: React.FC = () => {
       <div className='flex flex-row gap-4 mt-4'>
         <Card className='w-80'>
           <CardHeader>
-            <CardTitle>🛍️ Action</CardTitle>
+            <CardTitle>🛍️ Thao tác</CardTitle>
           </CardHeader>
           <CardContent className='space-y-4'>
             {selectedStore ? (
               <div className='space-y-4'>
                 <div>
-                  <p className='text-sm font-medium'>ID</p>
+                  <p className='text-sm font-medium'>Mã số</p>
                   <p className='text-sm text-muted-foreground'>
                     {selectedStore.id}
                   </p>
                 </div>
                 <div>
-                  <p className='text-sm font-medium'>Name</p>
+                  <p className='text-sm font-medium'>Tên</p>
                   <p className='text-sm text-muted-foreground'>
                     {selectedStore.name}
                   </p>
                 </div>
 
                 <div>
-                  <p className='text-sm font-medium mb-2'>Shape</p>
+                  <p className='text-sm font-medium mb-2'>Hình dạng</p>
                   <Select
                     value={selectedStore.shapeType}
                     onValueChange={(value) =>
@@ -254,19 +264,19 @@ const MarketMap: React.FC = () => {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Select shape' />
+                      <SelectValue placeholder='Chọn hình dạng' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='rect'>Rectangle</SelectItem>
-                      <SelectItem value='rounded'>Rounded</SelectItem>
-                      <SelectItem value='circle'>Circle</SelectItem>
-                      <SelectItem value='ellipse'>Ellipse</SelectItem>
+                      <SelectItem value='rect'>Hình chữ nhật</SelectItem>
+                      <SelectItem value='rounded'>Hình bo tròn</SelectItem>
+                      <SelectItem value='circle'>Hình tròn</SelectItem>
+                      <SelectItem value='ellipse'>Hình elip</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <p className='text-sm font-medium mb-2'>Color</p>
+                  <p className='text-sm font-medium mb-2'>Màu sắc</p>
                   <div className='flex items-center gap-2'>
                     <input
                       type='color'
@@ -281,41 +291,41 @@ const MarketMap: React.FC = () => {
                 </div>
 
                 <div>
-                  <p className='text-sm font-medium'>Position</p>
+                  <p className='text-sm font-medium'>Vị trí</p>
                   <p className='text-sm text-muted-foreground'>
                     X: {selectedStore.x}, Y: {selectedStore.y}
                   </p>
                 </div>
                 <div>
-                  <p className='text-sm font-medium'>Dimensions</p>
+                  <p className='text-sm font-medium'>Kích thước</p>
                   <p className='text-sm text-muted-foreground'>
-                    Width: {selectedStore.width}, Height: {selectedStore.height}
+                    Rộng: {selectedStore.width}, Cao: {selectedStore.height}
                   </p>
                 </div>
               </div>
             ) : (
               <p className='text-sm text-muted-foreground italic'>
-                Click a store to select
+                Nhấp vào gian hàng để chọn
               </p>
             )}
 
             <div className='space-y-2 pt-4'>
               <Button variant='default' className='w-full' onClick={addStore}>
-                ➕ Add Store
+                ➕ Thêm gian hàng
               </Button>
               <Button
                 variant='destructive'
                 className='w-full'
                 onClick={deleteSelectedStore}
               >
-                🗑️ Delete
+                🗑️ Xóa
               </Button>
               <Button
                 variant='secondary'
                 className='w-full'
                 onClick={saveLayout}
               >
-                💾 Save Layout
+                💾 Lưu bản đồ
               </Button>
             </div>
           </CardContent>
@@ -345,25 +355,35 @@ const MarketMap: React.FC = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Store Info</DialogTitle>
+              <DialogTitle>Thông tin gian hàng</DialogTitle>
             </DialogHeader>
             {selectedStore && (
               <div className='space-y-4'>
                 <div>
-                  <p className='text-sm font-medium mb-2'>Name</p>
+                  <p className='text-sm font-medium mb-2'>Tên</p>
                   <Input
                     value={selectedStore.name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateStoreName(e.target.value)
                     }
-                    placeholder='Enter store name'
+                    placeholder='Nhập tên gian hàng'
+                  />
+                </div>
+                <div>
+                  <p className='text-sm font-medium mb-2'>Chủ cửa hàng</p>
+                  <Input
+                    value={selectedStore.storeOwner}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      updateStoreOwner(e.target.value)
+                    }
+                    placeholder='Nhập tên chủ cửa hàng'
                   />
                 </div>
               </div>
             )}
             <DialogFooter className='gap-2'>
               <Button variant='default' onClick={saveStoreChanges}>
-                Save Changes
+                Lưu thay đổi
               </Button>
             </DialogFooter>
           </DialogContent>
