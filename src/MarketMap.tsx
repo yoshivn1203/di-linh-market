@@ -29,6 +29,7 @@ interface Store {
   height: number;
   color: string;
   shapeType: ShapeType;
+  rotation: number;
 }
 
 const MarketMap: React.FC = () => {
@@ -62,7 +63,8 @@ const MarketMap: React.FC = () => {
         ? {
             ...store,
             width: node.width() * node.scaleX(),
-            height: node.height() * node.scaleY()
+            height: node.height() * node.scaleY(),
+            rotation: node.rotation()
           }
         : store
     );
@@ -102,7 +104,8 @@ const MarketMap: React.FC = () => {
       width: 100,
       height: 80,
       color: 'lightgray',
-      shapeType: 'rect'
+      shapeType: 'rect',
+      rotation: 0
     };
     setStores([...stores, newStore]);
     setSelectedId(newStore.id);
@@ -123,6 +126,14 @@ const MarketMap: React.FC = () => {
     setStores(updated);
   };
 
+  const updateStoreColor = (newColor: string) => {
+    if (selectedId === null) return;
+    const updated = stores.map((store) =>
+      store.id === selectedId ? { ...store, color: newColor } : store
+    );
+    setStores(updated);
+  };
+
   const updateStoreName = (newName: string) => {
     if (selectedId === null) return;
     const updated = stores.map((store) =>
@@ -136,8 +147,13 @@ const MarketMap: React.FC = () => {
       key: store.id,
       draggable: true,
       onClick: () => setSelectedId(store.id),
+      onDblClick: () => {
+        setSelectedId(store.id);
+        setIsDialogOpen(true);
+      },
       onDragEnd: (e: any) => handleDragEnd(e, store.id),
-      onTransformEnd: () => handleTransformEnd(store.id)
+      onTransformEnd: () => handleTransformEnd(store.id),
+      rotation: store.rotation
     };
 
     switch (store.shapeType) {
@@ -250,6 +266,21 @@ const MarketMap: React.FC = () => {
                 </div>
 
                 <div>
+                  <p className='text-sm font-medium mb-2'>Color</p>
+                  <div className='flex items-center gap-2'>
+                    <input
+                      type='color'
+                      value={selectedStore.color}
+                      onChange={(e) => updateStoreColor(e.target.value)}
+                      className='w-10 h-10 rounded cursor-pointer'
+                    />
+                    <span className='text-sm text-muted-foreground'>
+                      {selectedStore.color}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
                   <p className='text-sm font-medium'>Position</p>
                   <p className='text-sm text-muted-foreground'>
                     X: {selectedStore.x}, Y: {selectedStore.y}
@@ -260,22 +291,6 @@ const MarketMap: React.FC = () => {
                   <p className='text-sm text-muted-foreground'>
                     Width: {selectedStore.width}, Height: {selectedStore.height}
                   </p>
-                </div>
-                <div className='flex gap-2'>
-                  <Button
-                    variant='destructive'
-                    className='flex-1'
-                    onClick={deleteSelectedStore}
-                  >
-                    🗑️ Delete
-                  </Button>
-                  <Button
-                    variant='secondary'
-                    className='flex-1'
-                    onClick={() => setIsDialogOpen(true)}
-                  >
-                    👁️ View Store Info
-                  </Button>
                 </div>
               </div>
             ) : (
@@ -289,6 +304,13 @@ const MarketMap: React.FC = () => {
                 ➕ Add Store
               </Button>
               <Button
+                variant='destructive'
+                className='w-full'
+                onClick={deleteSelectedStore}
+              >
+                🗑️ Delete
+              </Button>
+              <Button
                 variant='secondary'
                 className='w-full'
                 onClick={saveLayout}
@@ -299,7 +321,7 @@ const MarketMap: React.FC = () => {
           </CardContent>
         </Card>
         <div className='w-[1280px] h-[720px] border border-border rounded-lg shadow-md'>
-          <Stage width={1280} height={720} className=''>
+          <Stage width={1280} height={720} className='bg-gray-100'>
             <Layer>
               {stores.map((store) => (
                 <React.Fragment key={store.id}>
