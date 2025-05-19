@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Rect, Circle, Ellipse, Transformer } from 'react-konva';
+import { Stage, Layer, Transformer } from 'react-konva';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import {
@@ -17,21 +17,8 @@ import {
   DialogFooter
 } from './components/ui/dialog';
 import { Input } from './components/ui/input';
-
-type ShapeType = 'rect' | 'rounded' | 'circle' | 'ellipse';
-
-interface Store {
-  id: number;
-  name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: string;
-  shapeType: ShapeType;
-  rotation: number;
-  storeOwner: string;
-}
+import { Store, ShapeType } from './types/store';
+import { renderShape } from './utils/shapeRenderer';
 
 const MarketMap: React.FC = () => {
   const [stores, setStores] = useState<Store[]>(() => {
@@ -152,83 +139,6 @@ const MarketMap: React.FC = () => {
     setStores(updated);
   };
 
-  const renderShape = (store: Store) => {
-    const commonProps = {
-      key: store.id,
-      draggable: true,
-      onClick: () => setSelectedId(store.id),
-      onDblClick: () => {
-        setSelectedId(store.id);
-        setIsDialogOpen(true);
-      },
-      onDragEnd: (e: any) => handleDragEnd(e, store.id),
-      onTransformEnd: () => handleTransformEnd(store.id),
-      rotation: store.rotation
-    };
-
-    switch (store.shapeType) {
-      case 'circle':
-        return (
-          <Circle
-            {...commonProps}
-            ref={(node) => {
-              if (node) shapeRefs.current.set(store.id, node);
-            }}
-            x={store.x}
-            y={store.y}
-            radius={Math.min(store.width, store.height) / 2}
-            fill={store.color}
-          />
-        );
-      case 'ellipse':
-        return (
-          <Ellipse
-            {...commonProps}
-            ref={(node) => {
-              if (node) shapeRefs.current.set(store.id, node);
-            }}
-            x={store.x}
-            y={store.y}
-            radiusX={store.width / 2}
-            radiusY={store.height / 2}
-            fill={store.color}
-          />
-        );
-      case 'rounded':
-        return (
-          <Rect
-            {...commonProps}
-            ref={(node) => {
-              if (node) shapeRefs.current.set(store.id, node);
-            }}
-            x={store.x}
-            y={store.y}
-            width={store.width}
-            height={store.height}
-            cornerRadius={15}
-            fill={store.color}
-            stroke='black'
-          />
-        );
-      case 'rect':
-      default:
-        return (
-          <Rect
-            {...commonProps}
-            ref={(node) => {
-              if (node) shapeRefs.current.set(store.id, node);
-            }}
-            x={store.x}
-            y={store.y}
-            width={store.width}
-            height={store.height}
-            fill={store.color}
-            stroke='black'
-          />
-        );
-    }
-  };
-
   const selectedStore = stores.find((s) => s.id === selectedId);
 
   return (
@@ -271,6 +181,10 @@ const MarketMap: React.FC = () => {
                       <SelectItem value='rounded'>Hình bo tròn</SelectItem>
                       <SelectItem value='circle'>Hình tròn</SelectItem>
                       <SelectItem value='ellipse'>Hình elip</SelectItem>
+                      <SelectItem value='star'>Hình sao</SelectItem>
+                      <SelectItem value='hexagon'>Hình lục giác</SelectItem>
+                      <SelectItem value='triangle'>Hình tam giác</SelectItem>
+                      <SelectItem value='diamond'>Hình thoi</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -335,16 +249,20 @@ const MarketMap: React.FC = () => {
             <Layer>
               {stores.map((store) => (
                 <React.Fragment key={store.id}>
-                  {renderShape(store)}
-                  {/* {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
-                  <Text
-                    x={store.x + 10}
-                    y={store.y + 30}
-                    text={store.name}
-                    fontSize={14}
-                    fill='black'
-                  />
-                ) : null} */}
+                  {renderShape(store, {
+                    draggable: true,
+                    onClick: () => setSelectedId(store.id),
+                    onDblClick: () => {
+                      setSelectedId(store.id);
+                      setIsDialogOpen(true);
+                    },
+                    onDragEnd: (e) => handleDragEnd(e, store.id),
+                    onTransformEnd: () => handleTransformEnd(store.id),
+                    rotation: store.rotation,
+                    ref: (node) => {
+                      if (node) shapeRefs.current.set(store.id, node);
+                    }
+                  })}
                 </React.Fragment>
               ))}
               <Transformer ref={trRef} />
