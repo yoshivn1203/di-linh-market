@@ -206,97 +206,105 @@ const MarketMap: React.FC = () => {
   const selectedStore = stores.find((s) => s.id === selectedId);
 
   return (
-    <div className='flex flex-row gap-4 p-4'>
-      <Card className='w-80'>
-        <CardHeader>
-          <CardTitle>🛍️ Action</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          {selectedStore ? (
-            <div className='space-y-4'>
-              <div>
-                <p className='text-sm font-medium'>ID</p>
-                <p className='text-sm text-muted-foreground'>
-                  {selectedStore.id}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm font-medium'>Name</p>
-                <p className='text-sm text-muted-foreground'>
-                  {selectedStore.name}
-                </p>
-              </div>
+    <div className='p-4'>
+      <h1 className='text-2xl font-bold text-red-500'>Bản đồ chợ Di Linh</h1>
+      <div className='flex flex-row gap-4 mt-4'>
+        <Card className='w-80'>
+          <CardHeader>
+            <CardTitle>🛍️ Action</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            {selectedStore ? (
+              <div className='space-y-4'>
+                <div>
+                  <p className='text-sm font-medium'>ID</p>
+                  <p className='text-sm text-muted-foreground'>
+                    {selectedStore.id}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium'>Name</p>
+                  <p className='text-sm text-muted-foreground'>
+                    {selectedStore.name}
+                  </p>
+                </div>
 
-              <div>
-                <p className='text-sm font-medium mb-2'>Shape</p>
-                <Select
-                  value={selectedStore.shapeType}
-                  onValueChange={(value) => updateShapeType(value as ShapeType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select shape' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='rect'>Rectangle</SelectItem>
-                    <SelectItem value='rounded'>Rounded</SelectItem>
-                    <SelectItem value='circle'>Circle</SelectItem>
-                    <SelectItem value='ellipse'>Ellipse</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <p className='text-sm font-medium mb-2'>Shape</p>
+                  <Select
+                    value={selectedStore.shapeType}
+                    onValueChange={(value) =>
+                      updateShapeType(value as ShapeType)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Select shape' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='rect'>Rectangle</SelectItem>
+                      <SelectItem value='rounded'>Rounded</SelectItem>
+                      <SelectItem value='circle'>Circle</SelectItem>
+                      <SelectItem value='ellipse'>Ellipse</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <p className='text-sm font-medium'>Position</p>
-                <p className='text-sm text-muted-foreground'>
-                  X: {selectedStore.x}, Y: {selectedStore.y}
-                </p>
+                <div>
+                  <p className='text-sm font-medium'>Position</p>
+                  <p className='text-sm text-muted-foreground'>
+                    X: {selectedStore.x}, Y: {selectedStore.y}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm font-medium'>Dimensions</p>
+                  <p className='text-sm text-muted-foreground'>
+                    Width: {selectedStore.width}, Height: {selectedStore.height}
+                  </p>
+                </div>
+                <div className='flex gap-2'>
+                  <Button
+                    variant='destructive'
+                    className='flex-1'
+                    onClick={deleteSelectedStore}
+                  >
+                    🗑️ Delete
+                  </Button>
+                  <Button
+                    variant='secondary'
+                    className='flex-1'
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    👁️ View Store Info
+                  </Button>
+                </div>
               </div>
-              <div>
-                <p className='text-sm font-medium'>Dimensions</p>
-                <p className='text-sm text-muted-foreground'>
-                  Width: {selectedStore.width}, Height: {selectedStore.height}
-                </p>
-              </div>
-              <div className='flex gap-2'>
-                <Button
-                  variant='destructive'
-                  className='flex-1'
-                  onClick={deleteSelectedStore}
-                >
-                  🗑️ Delete
-                </Button>
-                <Button
-                  variant='secondary'
-                  className='flex-1'
-                  onClick={() => setIsDialogOpen(true)}
-                >
-                  👁️ View Store Info
-                </Button>
-              </div>
+            ) : (
+              <p className='text-sm text-muted-foreground italic'>
+                Click a store to select
+              </p>
+            )}
+
+            <div className='space-y-2 pt-4'>
+              <Button variant='default' className='w-full' onClick={addStore}>
+                ➕ Add Store
+              </Button>
+              <Button
+                variant='secondary'
+                className='w-full'
+                onClick={saveLayout}
+              >
+                💾 Save Layout
+              </Button>
             </div>
-          ) : (
-            <p className='text-sm text-muted-foreground italic'>
-              Click a store to select
-            </p>
-          )}
-
-          <div className='space-y-2 pt-4'>
-            <Button variant='default' className='w-full' onClick={addStore}>
-              ➕ Add Store
-            </Button>
-            <Button variant='secondary' className='w-full' onClick={saveLayout}>
-              💾 Save Layout
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      <div className='w-[1024px] h-[768px] border border-border rounded-lg shadow-md'>
-        <Stage width={1024} height={768} className=''>
-          <Layer>
-            {stores.map((store) => (
-              <React.Fragment key={store.id}>
-                {renderShape(store)}
-                {/* {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
+          </CardContent>
+        </Card>
+        <div className='w-[1024px] h-[768px] border border-border rounded-lg shadow-md'>
+          <Stage width={1024} height={768} className=''>
+            <Layer>
+              {stores.map((store) => (
+                <React.Fragment key={store.id}>
+                  {renderShape(store)}
+                  {/* {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
                   <Text
                     x={store.x + 10}
                     y={store.y + 30}
@@ -305,39 +313,40 @@ const MarketMap: React.FC = () => {
                     fill='black'
                   />
                 ) : null} */}
-              </React.Fragment>
-            ))}
-            <Transformer ref={trRef} />
-          </Layer>
-        </Stage>
-      </div>
+                </React.Fragment>
+              ))}
+              <Transformer ref={trRef} />
+            </Layer>
+          </Stage>
+        </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Store Info</DialogTitle>
-          </DialogHeader>
-          {selectedStore && (
-            <div className='space-y-4'>
-              <div>
-                <p className='text-sm font-medium mb-2'>Name</p>
-                <Input
-                  value={selectedStore.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    updateStoreName(e.target.value)
-                  }
-                  placeholder='Enter store name'
-                />
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Store Info</DialogTitle>
+            </DialogHeader>
+            {selectedStore && (
+              <div className='space-y-4'>
+                <div>
+                  <p className='text-sm font-medium mb-2'>Name</p>
+                  <Input
+                    value={selectedStore.name}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      updateStoreName(e.target.value)
+                    }
+                    placeholder='Enter store name'
+                  />
+                </div>
               </div>
-            </div>
-          )}
-          <DialogFooter className='gap-2'>
-            <Button variant='default' onClick={saveStoreChanges}>
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            )}
+            <DialogFooter className='gap-2'>
+              <Button variant='default' onClick={saveStoreChanges}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
