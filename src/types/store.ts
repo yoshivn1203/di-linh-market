@@ -3,10 +3,11 @@ export type ShapeType =
   | 'rounded'
   | 'circle'
   | 'ellipse'
-  | 'star'
   | 'hexagon'
   | 'triangle'
-  | 'diamond';
+  | 'diamond'
+  | 'custom1'
+  | 'custom2';
 
 export interface Store {
   id: number;

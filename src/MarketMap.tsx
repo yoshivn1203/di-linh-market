@@ -109,10 +109,23 @@ const MarketMap: React.FC = () => {
 
   const updateShapeType = (newShape: ShapeType) => {
     if (selectedId === null) return;
+
+    // First update the store
     const updated = stores.map((store) =>
       store.id === selectedId ? { ...store, shapeType: newShape } : store
     );
     setStores(updated);
+
+    // Temporarily clear the transformer
+    trRef.current?.nodes([]);
+
+    // Force a re-render of the transformer with the new shape
+    setTimeout(() => {
+      if (trRef.current && shapeRefs.current.has(selectedId)) {
+        trRef.current.nodes([shapeRefs.current.get(selectedId)]);
+        trRef.current.getLayer().batchDraw();
+      }
+    }, 0);
   };
 
   const updateStoreColor = (newColor: string) => {
@@ -181,10 +194,11 @@ const MarketMap: React.FC = () => {
                       <SelectItem value='rounded'>Hình bo tròn</SelectItem>
                       <SelectItem value='circle'>Hình tròn</SelectItem>
                       <SelectItem value='ellipse'>Hình elip</SelectItem>
-                      <SelectItem value='star'>Hình sao</SelectItem>
                       <SelectItem value='hexagon'>Hình lục giác</SelectItem>
                       <SelectItem value='triangle'>Hình tam giác</SelectItem>
                       <SelectItem value='diamond'>Hình thoi</SelectItem>
+                      <SelectItem value='custom1'>Hình đa giác 1</SelectItem>
+                      <SelectItem value='custom2'>Hình đa giác 2</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
