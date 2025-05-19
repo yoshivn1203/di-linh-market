@@ -8,6 +8,15 @@ import {
   Text,
   Transformer
 } from 'react-konva';
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from './components/ui/select';
 
 type ShapeType = 'rect' | 'rounded' | 'circle' | 'ellipse';
 
@@ -220,7 +229,7 @@ const MarketMap: React.FC = () => {
       <Stage
         width={800}
         height={500}
-        className='border border-gray-300 rounded-lg shadow-md'
+        className='border border-border rounded-lg shadow-md'
       >
         <Layer>
           {stores.map((store) => (
@@ -241,55 +250,66 @@ const MarketMap: React.FC = () => {
         </Layer>
       </Stage>
 
-      <div className='w-64 p-4 bg-white rounded-lg shadow-md'>
-        <h3 className='text-xl font-semibold mb-4'>🛍️ Store Info</h3>
-        {selectedStore ? (
-          <div className='space-y-3'>
-            <p>
-              <span className='font-medium'>Name:</span> {selectedStore.name}
-            </p>
-            <p>
-              <span className='font-medium'>ID:</span> {selectedStore.id}
-            </p>
-            <div>
-              <p className='font-medium mb-2'>Shape:</p>
-              <select
-                value={selectedStore.shapeType}
-                onChange={(e) => updateShapeType(e.target.value as ShapeType)}
-                className='w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
+      <Card className='w-80'>
+        <CardHeader>
+          <CardTitle>🛍️ Store Info</CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          {selectedStore ? (
+            <div className='space-y-4'>
+              <div>
+                <p className='text-sm font-medium'>Name</p>
+                <p className='text-sm text-muted-foreground'>
+                  {selectedStore.name}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm font-medium'>ID</p>
+                <p className='text-sm text-muted-foreground'>
+                  {selectedStore.id}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm font-medium mb-2'>Shape</p>
+                <Select
+                  value={selectedStore.shapeType}
+                  onValueChange={(value) => updateShapeType(value as ShapeType)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select shape' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='rect'>Rectangle</SelectItem>
+                    <SelectItem value='rounded'>Rounded</SelectItem>
+                    <SelectItem value='circle'>Circle</SelectItem>
+                    <SelectItem value='ellipse'>Ellipse</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant='destructive'
+                className='w-full'
+                onClick={deleteSelectedStore}
               >
-                <option value='rect'>Rectangle</option>
-                <option value='rounded'>Rounded</option>
-                <option value='circle'>Circle</option>
-                <option value='ellipse'>Ellipse</option>
-              </select>
+                🗑️ Delete
+              </Button>
             </div>
-            <button
-              onClick={deleteSelectedStore}
-              className='w-full mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors'
-            >
-              🗑️ Delete
-            </button>
-          </div>
-        ) : (
-          <p className='text-gray-500 italic'>Click a store to select</p>
-        )}
+          ) : (
+            <p className='text-sm text-muted-foreground italic'>
+              Click a store to select
+            </p>
+          )}
 
-        <div className='mt-6 space-y-3'>
-          <button
-            onClick={addStore}
-            className='w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors'
-          >
-            ➕ Add Store
-          </button>
-          <button
-            onClick={saveLayout}
-            className='w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors'
-          >
-            💾 Save Layout
-          </button>
-        </div>
-      </div>
+          <div className='space-y-2 pt-4'>
+            <Button variant='default' className='w-full' onClick={addStore}>
+              ➕ Add Store
+            </Button>
+            <Button variant='secondary' className='w-full' onClick={saveLayout}>
+              💾 Save Layout
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
