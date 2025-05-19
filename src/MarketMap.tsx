@@ -17,6 +17,14 @@ import {
   SelectTrigger,
   SelectValue
 } from './components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from './components/ui/dialog';
+import { Input } from './components/ui/input';
 
 type ShapeType = 'rect' | 'rounded' | 'circle' | 'ellipse';
 
@@ -71,6 +79,7 @@ const MarketMap: React.FC = () => {
   });
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const trRef = useRef<any>(null);
   const shapeRefs = useRef<Map<number, any>>(new Map());
 
@@ -119,6 +128,11 @@ const MarketMap: React.FC = () => {
     alert('Layout saved!');
   };
 
+  const saveStoreChanges = () => {
+    localStorage.setItem('market-layout', JSON.stringify(stores));
+    setIsDialogOpen(false);
+  };
+
   const addStore = () => {
     const maxId = stores.reduce((max, store) => Math.max(max, store.id), 0);
     const newStore: Store = {
@@ -146,6 +160,14 @@ const MarketMap: React.FC = () => {
     if (selectedId === null) return;
     const updated = stores.map((store) =>
       store.id === selectedId ? { ...store, shapeType: newShape } : store
+    );
+    setStores(updated);
+  };
+
+  const updateStoreName = (newName: string) => {
+    if (selectedId === null) return;
+    const updated = stores.map((store) =>
+      store.id === selectedId ? { ...store, name: newName } : store
     );
     setStores(updated);
   };
@@ -235,7 +257,7 @@ const MarketMap: React.FC = () => {
           {stores.map((store) => (
             <React.Fragment key={store.id}>
               {renderShape(store)}
-              {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
+              {/* {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
                 <Text
                   x={store.x + 10}
                   y={store.y + 30}
@@ -243,7 +265,7 @@ const MarketMap: React.FC = () => {
                   fontSize={14}
                   fill='black'
                 />
-              ) : null}
+              ) : null} */}
             </React.Fragment>
           ))}
           <Transformer ref={trRef} />
@@ -252,7 +274,7 @@ const MarketMap: React.FC = () => {
 
       <Card className='w-80'>
         <CardHeader>
-          <CardTitle>🛍️ Store Info</CardTitle>
+          <CardTitle>🛍️ Action</CardTitle>
         </CardHeader>
         <CardContent className='space-y-4'>
           {selectedStore ? (
@@ -286,13 +308,22 @@ const MarketMap: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button
-                variant='destructive'
-                className='w-full'
-                onClick={deleteSelectedStore}
-              >
-                🗑️ Delete
-              </Button>
+              <div className='flex gap-2'>
+                <Button
+                  variant='destructive'
+                  className='flex-1'
+                  onClick={deleteSelectedStore}
+                >
+                  🗑️ Delete
+                </Button>
+                <Button
+                  variant='secondary'
+                  className='flex-1'
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  👁️ View Store Info
+                </Button>
+              </div>
             </div>
           ) : (
             <p className='text-sm text-muted-foreground italic'>
@@ -310,6 +341,77 @@ const MarketMap: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Store Info</DialogTitle>
+          </DialogHeader>
+          {selectedStore && (
+            <div className='space-y-4'>
+              <div>
+                <p className='text-sm font-medium mb-2'>Name</p>
+                <Input
+                  value={selectedStore.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateStoreName(e.target.value)
+                  }
+                  placeholder='Enter store name'
+                />
+              </div>
+              <div>
+                <p className='text-sm font-medium'>ID</p>
+                <p className='text-sm text-muted-foreground'>
+                  {selectedStore.id}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm font-medium'>Position</p>
+                <p className='text-sm text-muted-foreground'>
+                  X: {selectedStore.x}, Y: {selectedStore.y}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm font-medium'>Dimensions</p>
+                <p className='text-sm text-muted-foreground'>
+                  Width: {selectedStore.width}, Height: {selectedStore.height}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm font-medium mb-2'>Shape</p>
+                <Select
+                  value={selectedStore.shapeType}
+                  onValueChange={(value) => updateShapeType(value as ShapeType)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Select shape' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='rect'>Rectangle</SelectItem>
+                    <SelectItem value='rounded'>Rounded</SelectItem>
+                    <SelectItem value='circle'>Circle</SelectItem>
+                    <SelectItem value='ellipse'>Ellipse</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter className='gap-2'>
+            <Button
+              variant='destructive'
+              onClick={() => {
+                deleteSelectedStore();
+                setIsDialogOpen(false);
+              }}
+            >
+              Delete Store
+            </Button>
+            <Button variant='default' onClick={saveStoreChanges}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
