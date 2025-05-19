@@ -1,13 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Stage,
-  Layer,
-  Rect,
-  Circle,
-  Ellipse,
-  Text,
-  Transformer
-} from 'react-konva';
+import { Stage, Layer, Rect, Circle, Ellipse, Transformer } from 'react-konva';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import {
@@ -39,43 +31,10 @@ interface Store {
   shapeType: ShapeType;
 }
 
-const defaultStores: Store[] = [
-  {
-    id: 1,
-    name: 'Store A',
-    x: 50,
-    y: 50,
-    width: 100,
-    height: 80,
-    color: 'lightblue',
-    shapeType: 'rect'
-  },
-  {
-    id: 2,
-    name: 'Store B',
-    x: 200,
-    y: 50,
-    width: 120,
-    height: 80,
-    color: 'lightgreen',
-    shapeType: 'circle'
-  },
-  {
-    id: 3,
-    name: 'Store C',
-    x: 350,
-    y: 50,
-    width: 100,
-    height: 80,
-    color: 'lightcoral',
-    shapeType: 'ellipse'
-  }
-];
-
 const MarketMap: React.FC = () => {
   const [stores, setStores] = useState<Store[]>(() => {
     const saved = localStorage.getItem('market-layout');
-    return saved ? JSON.parse(saved) : defaultStores;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -247,31 +206,7 @@ const MarketMap: React.FC = () => {
   const selectedStore = stores.find((s) => s.id === selectedId);
 
   return (
-    <div className='flex p-4 gap-4'>
-      <Stage
-        width={800}
-        height={500}
-        className='border border-border rounded-lg shadow-md'
-      >
-        <Layer>
-          {stores.map((store) => (
-            <React.Fragment key={store.id}>
-              {renderShape(store)}
-              {/* {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
-                <Text
-                  x={store.x + 10}
-                  y={store.y + 30}
-                  text={store.name}
-                  fontSize={14}
-                  fill='black'
-                />
-              ) : null} */}
-            </React.Fragment>
-          ))}
-          <Transformer ref={trRef} />
-        </Layer>
-      </Stage>
-
+    <div className='flex flex-row gap-4 p-4'>
       <Card className='w-80'>
         <CardHeader>
           <CardTitle>🛍️ Action</CardTitle>
@@ -280,17 +215,18 @@ const MarketMap: React.FC = () => {
           {selectedStore ? (
             <div className='space-y-4'>
               <div>
-                <p className='text-sm font-medium'>Name</p>
-                <p className='text-sm text-muted-foreground'>
-                  {selectedStore.name}
-                </p>
-              </div>
-              <div>
                 <p className='text-sm font-medium'>ID</p>
                 <p className='text-sm text-muted-foreground'>
                   {selectedStore.id}
                 </p>
               </div>
+              <div>
+                <p className='text-sm font-medium'>Name</p>
+                <p className='text-sm text-muted-foreground'>
+                  {selectedStore.name}
+                </p>
+              </div>
+
               <div>
                 <p className='text-sm font-medium mb-2'>Shape</p>
                 <Select
@@ -307,6 +243,19 @@ const MarketMap: React.FC = () => {
                     <SelectItem value='ellipse'>Ellipse</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <p className='text-sm font-medium'>Position</p>
+                <p className='text-sm text-muted-foreground'>
+                  X: {selectedStore.x}, Y: {selectedStore.y}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm font-medium'>Dimensions</p>
+                <p className='text-sm text-muted-foreground'>
+                  Width: {selectedStore.width}, Height: {selectedStore.height}
+                </p>
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -341,6 +290,27 @@ const MarketMap: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      <div className='w-[1024px] h-[768px] border border-border rounded-lg shadow-md'>
+        <Stage width={1024} height={768} className=''>
+          <Layer>
+            {stores.map((store) => (
+              <React.Fragment key={store.id}>
+                {renderShape(store)}
+                {/* {store.shapeType === 'rect' || store.shapeType === 'rounded' ? (
+                  <Text
+                    x={store.x + 10}
+                    y={store.y + 30}
+                    text={store.name}
+                    fontSize={14}
+                    fill='black'
+                  />
+                ) : null} */}
+              </React.Fragment>
+            ))}
+            <Transformer ref={trRef} />
+          </Layer>
+        </Stage>
+      </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
@@ -359,53 +329,9 @@ const MarketMap: React.FC = () => {
                   placeholder='Enter store name'
                 />
               </div>
-              <div>
-                <p className='text-sm font-medium'>ID</p>
-                <p className='text-sm text-muted-foreground'>
-                  {selectedStore.id}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm font-medium'>Position</p>
-                <p className='text-sm text-muted-foreground'>
-                  X: {selectedStore.x}, Y: {selectedStore.y}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm font-medium'>Dimensions</p>
-                <p className='text-sm text-muted-foreground'>
-                  Width: {selectedStore.width}, Height: {selectedStore.height}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm font-medium mb-2'>Shape</p>
-                <Select
-                  value={selectedStore.shapeType}
-                  onValueChange={(value) => updateShapeType(value as ShapeType)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Select shape' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='rect'>Rectangle</SelectItem>
-                    <SelectItem value='rounded'>Rounded</SelectItem>
-                    <SelectItem value='circle'>Circle</SelectItem>
-                    <SelectItem value='ellipse'>Ellipse</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           )}
           <DialogFooter className='gap-2'>
-            <Button
-              variant='destructive'
-              onClick={() => {
-                deleteSelectedStore();
-                setIsDialogOpen(false);
-              }}
-            >
-              Delete Store
-            </Button>
             <Button variant='default' onClick={saveStoreChanges}>
               Save Changes
             </Button>
