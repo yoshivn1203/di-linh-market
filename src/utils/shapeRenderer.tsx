@@ -58,7 +58,7 @@ export const renderShape = (store: Store, commonProps: CommonProps) => {
           sceneFunc={(context, shape) => {
             const width = shape.getAttr('width');
             const height = shape.getAttr('height');
-            const cutSize = Math.min(width, height) * 0.7;
+            const cutSize = Math.min(width, height) * 0.5;
 
             context.beginPath();
             // Start from the cut-off point on top
@@ -125,7 +125,7 @@ export const renderShape = (store: Store, commonProps: CommonProps) => {
           sceneFunc={(context, shape) => {
             const width = shape.getAttr('width');
             const height = shape.getAttr('height');
-            const cutSize = Math.min(width, height) * 0.7;
+            const cutSize = Math.min(width, height) * 0.5;
 
             context.beginPath();
             // Start from the top-left corner
