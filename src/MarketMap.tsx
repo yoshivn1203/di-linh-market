@@ -304,7 +304,8 @@ const MarketMap: React.FC = () => {
         {
           tool,
           points: [pos.x, pos.y],
-          strokeWidth: brushSize
+          strokeWidth: brushSize,
+          id: Date.now() // Add unique id for each line
         }
       ]);
     } else if (e.target === e.target.getStage()) {
@@ -448,7 +449,7 @@ const MarketMap: React.FC = () => {
     <div className='p-4'>
       <div className='flex flex-col gap-4 mb-4'>
         <h1 className='text-2xl font-bold text-red-500'>Bản đồ chợ Di Linh</h1>
-        <div className='flex gap-4'>
+        <div className='space-y-4'>
           <Select
             value={selectedCanvasId.toString()}
             onValueChange={(value) => setSelectedCanvasId(parseInt(value))}
@@ -464,37 +465,40 @@ const MarketMap: React.FC = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select value={tool} onValueChange={(value) => setTool(value)}>
-            <SelectTrigger className='w-[200px]'>
-              <SelectValue placeholder='Chọn công cụ' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='brush'>Bút vẽ</SelectItem>
-              <SelectItem value='eraser'>Xóa</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className='flex items-center gap-2'>
-            <span className='text-sm'>Kích thước:</span>
-            <Input
-              type='number'
-              value={brushSize}
-              onChange={(e) => setBrushSize(Number(e.target.value))}
-              min={1}
-              max={20}
-              className='w-20'
-            />
+
+          <div className='flex gap-4'>
+            <Select value={tool} onValueChange={(value) => setTool(value)}>
+              <SelectTrigger className='w-[200px]'>
+                <SelectValue placeholder='Chọn công cụ' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='brush'>Bút vẽ</SelectItem>
+                <SelectItem value='eraser'>Xóa</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className='flex items-center gap-2'>
+              <span className='text-sm'>Kích thước:</span>
+              <Input
+                type='number'
+                value={brushSize}
+                onChange={(e) => setBrushSize(Number(e.target.value))}
+                min={1}
+                max={20}
+                className='w-16'
+              />
+            </div>
+            <Button
+              variant={isDrawingMode ? 'default' : 'secondary'}
+              onClick={() => {
+                if (!isDrawingMode) {
+                  resetZoom();
+                }
+                setIsDrawingMode(!isDrawingMode);
+              }}
+            >
+              {isDrawingMode ? 'Thoát chế độ vẽ' : 'Chế độ vẽ'}
+            </Button>
           </div>
-          <Button
-            variant={isDrawingMode ? 'default' : 'secondary'}
-            onClick={() => {
-              if (!isDrawingMode) {
-                resetZoom();
-              }
-              setIsDrawingMode(!isDrawingMode);
-            }}
-          >
-            {isDrawingMode ? 'Thoát chế độ vẽ' : 'Chế độ vẽ'}
-          </Button>
         </div>
       </div>
       <div className='flex flex-row gap-4 mt-4'>
