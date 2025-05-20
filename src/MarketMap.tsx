@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Stage, Layer, Transformer } from 'react-konva';
+import { Stage, Layer, Transformer, Line } from 'react-konva';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import {
@@ -42,6 +42,11 @@ const MarketMap: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [lines, setLines] = useState<any[]>(() => {
+    const saved = localStorage.getItem(`market-drawings-${selectedCanvasId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selectedTextId, setSelectedTextId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,6 +59,9 @@ const MarketMap: React.FC = () => {
   const shapeRefs = useRef<Map<number, any>>(new Map());
   const textRefs = useRef<Map<number, any>>(new Map());
   const stageRef = useRef<any>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [tool, setTool] = useState('brush');
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
 
   useEffect(() => {
     const savedStores = localStorage.getItem(
@@ -62,9 +70,13 @@ const MarketMap: React.FC = () => {
     const savedTextLabels = localStorage.getItem(
       `market-text-labels-${selectedCanvasId}`
     );
+    const savedLines = localStorage.getItem(
+      `market-drawings-${selectedCanvasId}`
+    );
 
     setStores(savedStores ? JSON.parse(savedStores) : []);
     setTextLabels(savedTextLabels ? JSON.parse(savedTextLabels) : []);
+    setLines(savedLines ? JSON.parse(savedLines) : []);
     setSelectedId(null);
     setSelectedTextId(null);
   }, [selectedCanvasId]);
@@ -128,6 +140,10 @@ const MarketMap: React.FC = () => {
     localStorage.setItem(
       `market-text-labels-${selectedCanvasId}`,
       JSON.stringify(textLabels)
+    );
+    localStorage.setItem(
+      `market-drawings-${selectedCanvasId}`,
+      JSON.stringify(lines)
     );
     alert('Layout saved!');
   };
@@ -274,43 +290,54 @@ const MarketMap: React.FC = () => {
   };
 
   const handleMouseDown = (e: any) => {
-    // Only enable dragging if we're not clicking on a store
-    if (e.target === e.target.getStage()) {
+    if (isDrawingMode) {
+      setIsDrawing(true);
+      const pos = e.target.getStage().getPointerPosition();
+      setLines([...lines, { tool, points: [pos.x, pos.y] }]);
+    } else if (e.target === e.target.getStage()) {
       setIsDragging(true);
     }
   };
 
   const handleMouseMove = (e: any) => {
-    if (!isDragging) return;
+    if (isDrawing && isDrawingMode) {
+      const stage = e.target.getStage();
+      const point = stage.getPointerPosition();
+      let lastLine = lines[lines.length - 1];
+      lastLine.points = lastLine.points.concat([point.x, point.y]);
+      lines.splice(lines.length - 1, 1, lastLine);
+      setLines([...lines]);
+    } else if (isDragging) {
+      const stage = stageRef.current;
+      const newPos = {
+        x: stage.x() + e.evt.movementX,
+        y: stage.y() + e.evt.movementY
+      };
 
-    const stage = stageRef.current;
-    const newPos = {
-      x: stage.x() + e.evt.movementX,
-      y: stage.y() + e.evt.movementY
-    };
+      // Calculate boundaries
+      const stageWidth = stage.width();
+      const stageHeight = stage.height();
+      const scaledWidth = stageWidth * scale;
+      const scaledHeight = stageHeight * scale;
 
-    // Calculate boundaries
-    const stageWidth = stage.width();
-    const stageHeight = stage.height();
-    const scaledWidth = stageWidth * scale;
-    const scaledHeight = stageHeight * scale;
+      // Calculate maximum allowed position
+      const maxX = 0;
+      const maxY = 0;
+      const minX = stageWidth - scaledWidth;
+      const minY = stageHeight - scaledHeight;
 
-    // Calculate maximum allowed position
-    const maxX = 0;
-    const maxY = 0;
-    const minX = stageWidth - scaledWidth;
-    const minY = stageHeight - scaledHeight;
+      // Constrain the position within boundaries
+      newPos.x = Math.min(maxX, Math.max(minX, newPos.x));
+      newPos.y = Math.min(maxY, Math.max(minY, newPos.y));
 
-    // Constrain the position within boundaries
-    newPos.x = Math.min(maxX, Math.max(minX, newPos.x));
-    newPos.y = Math.min(maxY, Math.max(minY, newPos.y));
-
-    setPosition(newPos);
-    stage.position(newPos);
-    stage.batchDraw();
+      setPosition(newPos);
+      stage.position(newPos);
+      stage.batchDraw();
+    }
   };
 
   const handleMouseUp = () => {
+    setIsDrawing(false);
     setIsDragging(false);
   };
 
@@ -399,21 +426,40 @@ const MarketMap: React.FC = () => {
     <div className='p-4'>
       <div className='flex flex-col gap-4 mb-4'>
         <h1 className='text-2xl font-bold text-red-500'>Bản đồ chợ Di Linh</h1>
-        <Select
-          value={selectedCanvasId.toString()}
-          onValueChange={(value) => setSelectedCanvasId(parseInt(value))}
-        >
-          <SelectTrigger className='w-[200px]'>
-            <SelectValue placeholder='Chọn khu vực' />
-          </SelectTrigger>
-          <SelectContent>
-            {CANVASES.map((canvas) => (
-              <SelectItem key={canvas.id} value={canvas.id.toString()}>
-                {canvas.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className='flex gap-4'>
+          <Select
+            value={selectedCanvasId.toString()}
+            onValueChange={(value) => setSelectedCanvasId(parseInt(value))}
+          >
+            <SelectTrigger className='w-[200px]'>
+              <SelectValue placeholder='Chọn khu vực' />
+            </SelectTrigger>
+            <SelectContent>
+              {CANVASES.map((canvas) => (
+                <SelectItem key={canvas.id} value={canvas.id.toString()}>
+                  {canvas.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={tool} onValueChange={(value) => setTool(value)}>
+            <SelectTrigger className='w-[200px]'>
+              <SelectValue placeholder='Chọn công cụ' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='brush'>Bút vẽ</SelectItem>
+              <SelectItem value='eraser'>Xóa</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant={isDrawingMode ? 'default' : 'secondary'}
+            onClick={() => {
+              setIsDrawingMode(!isDrawingMode);
+            }}
+          >
+            {isDrawingMode ? 'Thoát chế độ vẽ' : 'Chế độ vẽ'}
+          </Button>
+        </div>
       </div>
       <div className='flex flex-row gap-4 mt-4'>
         <Card className='w-80'>
@@ -549,6 +595,20 @@ const MarketMap: React.FC = () => {
             draggable={false}
           >
             <Layer>
+              {lines.map((line, i) => (
+                <Line
+                  key={i}
+                  points={line.points}
+                  stroke='#000000'
+                  strokeWidth={3}
+                  tension={0.5}
+                  lineCap='round'
+                  lineJoin='round'
+                  globalCompositeOperation={
+                    line.tool === 'eraser' ? 'destination-out' : 'source-over'
+                  }
+                />
+              ))}
               {stores.map((store) => (
                 <React.Fragment key={store.id}>
                   {renderShape(store, {
