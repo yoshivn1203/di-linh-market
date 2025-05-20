@@ -62,6 +62,7 @@ const MarketMap: React.FC = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState('brush');
   const [brushSize, setBrushSize] = useState(3);
+  const [brushColor, setBrushColor] = useState('#000000');
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [tempLine, setTempLine] = useState<any>(null);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
@@ -311,6 +312,7 @@ const MarketMap: React.FC = () => {
             tool,
             points: [pos.x, pos.y, pos.x, pos.y],
             strokeWidth: brushSize,
+            stroke: brushColor,
             id: Date.now()
           });
         } else {
@@ -321,6 +323,7 @@ const MarketMap: React.FC = () => {
               tool,
               points: [startPoint.x, startPoint.y, pos.x, pos.y],
               strokeWidth: brushSize,
+              stroke: brushColor,
               id: Date.now()
             }
           ]);
@@ -336,6 +339,7 @@ const MarketMap: React.FC = () => {
             tool,
             points: [pos.x, pos.y],
             strokeWidth: brushSize,
+            stroke: brushColor,
             id: Date.now()
           }
         ]);
@@ -355,7 +359,8 @@ const MarketMap: React.FC = () => {
         setTempLine({
           tool,
           points: [startPoint.x, startPoint.y, point.x, point.y],
-          strokeWidth: brushSize
+          strokeWidth: brushSize,
+          stroke: brushColor
         });
       } else if (isDrawing && tool !== 'straight') {
         // Free drawing or eraser
@@ -538,6 +543,20 @@ const MarketMap: React.FC = () => {
                 className='w-16'
               />
             </div>
+            <div className='flex items-center gap-2'>
+              <span className='text-sm'>Màu sắc:</span>
+              <div className='flex items-center gap-2'>
+                <input
+                  type='color'
+                  value={brushColor}
+                  onChange={(e) => setBrushColor(e.target.value)}
+                  className='w-8 h-8 rounded cursor-pointer'
+                />
+                <span className='text-sm text-muted-foreground'>
+                  {brushColor}
+                </span>
+              </div>
+            </div>
             <Button
               variant={isDrawingMode ? 'default' : 'secondary'}
               onClick={() => {
@@ -692,7 +711,7 @@ const MarketMap: React.FC = () => {
                 <Line
                   key={i}
                   points={line.points}
-                  stroke='#000000'
+                  stroke={line.stroke || '#000000'}
                   strokeWidth={line.strokeWidth}
                   tension={0.5}
                   lineCap='round'
@@ -705,7 +724,7 @@ const MarketMap: React.FC = () => {
               {tempLine && (
                 <Line
                   points={tempLine.points}
-                  stroke='#000000'
+                  stroke={tempLine.stroke || '#000000'}
                   strokeWidth={tempLine.strokeWidth}
                   tension={0.5}
                   lineCap='round'
