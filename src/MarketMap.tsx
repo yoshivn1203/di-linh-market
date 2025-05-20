@@ -245,6 +245,11 @@ const MarketMap: React.FC = () => {
   const handleWheel = (e: any) => {
     e.evt.preventDefault();
 
+    // Prevent zooming while in drawing mode
+    if (isDrawingMode) {
+      return;
+    }
+
     const stage = stageRef.current;
     const oldScale = stage.scaleX();
 
@@ -422,6 +427,15 @@ const MarketMap: React.FC = () => {
     setTextLabels(updated);
   };
 
+  const resetZoom = () => {
+    const stage = stageRef.current;
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+    stage.scale({ x: 1, y: 1 });
+    stage.position({ x: 0, y: 0 });
+    stage.batchDraw();
+  };
+
   return (
     <div className='p-4'>
       <div className='flex flex-col gap-4 mb-4'>
@@ -454,6 +468,9 @@ const MarketMap: React.FC = () => {
           <Button
             variant={isDrawingMode ? 'default' : 'secondary'}
             onClick={() => {
+              if (!isDrawingMode) {
+                resetZoom();
+              }
               setIsDrawingMode(!isDrawingMode);
             }}
           >
