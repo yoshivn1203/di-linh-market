@@ -61,6 +61,7 @@ const MarketMap: React.FC = () => {
   const stageRef = useRef<any>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [tool, setTool] = useState('brush');
+  const [brushSize, setBrushSize] = useState(3);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
 
   useEffect(() => {
@@ -298,7 +299,14 @@ const MarketMap: React.FC = () => {
     if (isDrawingMode) {
       setIsDrawing(true);
       const pos = e.target.getStage().getPointerPosition();
-      setLines([...lines, { tool, points: [pos.x, pos.y] }]);
+      setLines([
+        ...lines,
+        {
+          tool,
+          points: [pos.x, pos.y],
+          strokeWidth: brushSize
+        }
+      ]);
     } else if (e.target === e.target.getStage()) {
       setIsDragging(true);
     }
@@ -465,6 +473,17 @@ const MarketMap: React.FC = () => {
               <SelectItem value='eraser'>Xóa</SelectItem>
             </SelectContent>
           </Select>
+          <div className='flex items-center gap-2'>
+            <span className='text-sm'>Kích thước:</span>
+            <Input
+              type='number'
+              value={brushSize}
+              onChange={(e) => setBrushSize(Number(e.target.value))}
+              min={1}
+              max={20}
+              className='w-20'
+            />
+          </div>
           <Button
             variant={isDrawingMode ? 'default' : 'secondary'}
             onClick={() => {
@@ -617,7 +636,7 @@ const MarketMap: React.FC = () => {
                   key={i}
                   points={line.points}
                   stroke='#000000'
-                  strokeWidth={3}
+                  strokeWidth={line.strokeWidth}
                   tension={0.5}
                   lineCap='round'
                   lineJoin='round'
