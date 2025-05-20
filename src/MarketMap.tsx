@@ -63,6 +63,10 @@ const MarketMap: React.FC = () => {
   const [tool, setTool] = useState('brush');
   const [brushSize, setBrushSize] = useState(3);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [tempLine, setTempLine] = useState<any>(null);
+  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
+    null
+  );
 
   useEffect(() => {
     const savedStores = localStorage.getItem(
@@ -297,30 +301,69 @@ const MarketMap: React.FC = () => {
 
   const handleMouseDown = (e: any) => {
     if (isDrawingMode) {
-      setIsDrawing(true);
       const pos = e.target.getStage().getPointerPosition();
-      setLines([
-        ...lines,
-        {
-          tool,
-          points: [pos.x, pos.y],
-          strokeWidth: brushSize,
-          id: Date.now() // Add unique id for each line
+
+      if (tool === 'straight') {
+        if (!startPoint) {
+          // First click - set start point
+          setStartPoint({ x: pos.x, y: pos.y });
+          setTempLine({
+            tool,
+            points: [pos.x, pos.y, pos.x, pos.y],
+            strokeWidth: brushSize,
+            id: Date.now()
+          });
+        } else {
+          // Second click - create the line
+          setLines([
+            ...lines,
+            {
+              tool,
+              points: [startPoint.x, startPoint.y, pos.x, pos.y],
+              strokeWidth: brushSize,
+              id: Date.now()
+            }
+          ]);
+          setStartPoint(null);
+          setTempLine(null);
         }
-      ]);
+      } else {
+        // Free drawing or eraser
+        setIsDrawing(true);
+        setLines([
+          ...lines,
+          {
+            tool,
+            points: [pos.x, pos.y],
+            strokeWidth: brushSize,
+            id: Date.now()
+          }
+        ]);
+      }
     } else if (e.target === e.target.getStage()) {
       setIsDragging(true);
     }
   };
 
   const handleMouseMove = (e: any) => {
-    if (isDrawing && isDrawingMode) {
+    if (isDrawingMode) {
       const stage = e.target.getStage();
       const point = stage.getPointerPosition();
-      let lastLine = lines[lines.length - 1];
-      lastLine.points = lastLine.points.concat([point.x, point.y]);
-      lines.splice(lines.length - 1, 1, lastLine);
-      setLines([...lines]);
+
+      if (tool === 'straight' && startPoint) {
+        // Update temporary line while moving mouse
+        setTempLine({
+          tool,
+          points: [startPoint.x, startPoint.y, point.x, point.y],
+          strokeWidth: brushSize
+        });
+      } else if (isDrawing && tool !== 'straight') {
+        // Free drawing or eraser
+        let lastLine = lines[lines.length - 1];
+        lastLine.points = lastLine.points.concat([point.x, point.y]);
+        lines.splice(lines.length - 1, 1, lastLine);
+        setLines([...lines]);
+      }
     } else if (isDragging) {
       const stage = stageRef.current;
       const newPos = {
@@ -467,12 +510,20 @@ const MarketMap: React.FC = () => {
           </Select>
 
           <div className='flex gap-4'>
-            <Select value={tool} onValueChange={(value) => setTool(value)}>
+            <Select
+              value={tool}
+              onValueChange={(value) => {
+                setTool(value);
+                setStartPoint(null);
+                setTempLine(null);
+              }}
+            >
               <SelectTrigger className='w-[200px]'>
                 <SelectValue placeholder='Chọn công cụ' />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value='brush'>Bút vẽ</SelectItem>
+                <SelectItem value='straight'>Đường thẳng</SelectItem>
                 <SelectItem value='eraser'>Xóa</SelectItem>
               </SelectContent>
             </Select>
@@ -493,6 +544,8 @@ const MarketMap: React.FC = () => {
                 if (!isDrawingMode) {
                   resetZoom();
                 }
+                setStartPoint(null);
+                setTempLine(null);
                 setIsDrawingMode(!isDrawingMode);
               }}
             >
@@ -649,6 +702,17 @@ const MarketMap: React.FC = () => {
                   }
                 />
               ))}
+              {tempLine && (
+                <Line
+                  points={tempLine.points}
+                  stroke='#000000'
+                  strokeWidth={tempLine.strokeWidth}
+                  tension={0.5}
+                  lineCap='round'
+                  lineJoin='round'
+                  globalCompositeOperation='source-over'
+                />
+              )}
               {stores.map((store) => (
                 <React.Fragment key={store.id}>
                   {renderShape(store, {
